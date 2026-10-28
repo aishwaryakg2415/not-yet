@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Not Yet — Diva UI</title>
+<style>
+  :root {
+    --night: #12030f; --plum: #2a0626; --plum-2: #3b0a35;
+    --pink: #ff2e93; --magenta: #c2187a; --bubble: #ff8ac4; --blush: #ffd1e6;
+    --gold: #f6c36b; --gold-2: #ffe3a3; --lilac: #c9b6ff;
+    --cream: #fff1f7; --muted: #c79bb5; --line: rgba(255, 138, 196, .22);
+    --glass: rgba(255, 255, 255, .06);
+    --stop: #ff3d6e; --warn: #ffb547; --go: #4be3a6; --doc: #7cc8ff;
+    --serif: "Playfair Display", Georgia, serif;
+    --sans: "Poppins", "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0209; font-family: var(--sans); color: var(--cream); padding: 60px; display: flex; gap: 60px; align-items: flex-start; }
+
+  .screen { width: 390px; height: 844px; border-radius: 44px; overflow: hidden; position: relative; flex: none;
+    background: radial-gradient(120% 60% at 85% -5%, rgba(255, 46, 147, .45), transparent 60%),
+                radial-gradient(90% 50% at -10% 35%, rgba(201, 182, 255, .18), transparent 60%),
+                linear-gradient(180deg, var(--plum) 0%, var(--night) 70%); }
+  .status { height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 28px; font-size: 14px; font-weight: 600; }
+  .status .dots { display: flex; gap: 6px; align-items: center; }
+  .status .dots span { width: 18px; height: 10px; border-radius: 3px; background: var(--cream); opacity: .9; }
+  .content { padding: 6px 22px 0; display: flex; flex-direction: column; gap: 16px; }
+
+  .brand { display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-family: var(--serif); font-style: italic; font-weight: 900; font-size: 30px; letter-spacing: -.5px; }
+  .logo b { color: var(--pink); }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--pink)); display: grid; place-items: center; font-weight: 700; font-size: 15px; color: var(--night); }
+  .tag { font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--bubble); font-weight: 600; }
+
+  h1 { font-family: var(--serif); font-weight: 900; font-size: 38px; line-height: 1.05; letter-spacing: -.5px; }
+  h1 i { color: var(--pink); }
+  h2 { font-family: var(--serif); font-weight: 800; font-size: 22px; letter-spacing: -.2px; }
+  .sub { color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+  .card { background: var(--glass); border: 1px solid var(--line); border-radius: 26px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .label { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--bubble); }
+
+  .search { display: flex; align-items: center; gap: 10px; height: 54px; border-radius: 99px; padding: 0 8px 0 20px; background: rgba(255, 255, 255, .09); border: 1px solid rgba(255, 138, 196, .35); }
+  .search span { flex: 1; font-size: 15px; color: var(--cream); }
+  .search .go { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--magenta)); display: grid; place-items: center; box-shadow: 0 6px 18px rgba(255, 46, 147, .5); }
+
+  .row { display: flex; gap: 10px; align-items: center; }
+  .chip { height: 34px; padding: 0 14px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; border: 1px solid var(--line); color: var(--blush); background: rgba(255, 255, 255, .04); }
+  .chip.on { background: linear-gradient(135deg, rgba(255, 46, 147, .35), rgba(194, 24, 122, .35)); border-color: var(--pink); color: #fff; font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .btn { height: 58px; border-radius: 99px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: .3px;
+    background: linear-gradient(135deg, var(--pink) 0%, var(--magenta) 100%); color: #fff; box-shadow: 0 12px 30px rgba(255, 46, 147, .45), inset 0 1px 0 rgba(255, 255, 255, .35); }
+  .btn.ghost { background: transparent; border: 1.5px solid rgba(255, 138, 196, .5); box-shadow: none; color: var(--blush); }
+  .btn.gold { background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: var(--night); box-shadow: 0 12px 30px rgba(246, 195, 107, .35); }
+
+  .result { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 20px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .07); }
+  .result.picked { border-color: var(--pink); background: rgba(255, 46, 147, .1); }
+  .thumb { width: 52px; height: 52px; border-radius: 14px; flex: none; background: linear-gradient(160deg, #ffd1e6, #ff8ac4); position: relative; }
+  .thumb::after { content: ""; position: absolute; left: 19px; top: 8px; width: 14px; height: 36px; border-radius: 6px 6px 4px 4px; background: rgba(255, 255, 255, .85); }
+  .thumb.t2 { background: linear-gradient(160deg, #ffe3a3, #f6c36b); }
+  .thumb.t3 { background: linear-gradient(160deg, #d9ccff, #a68bff); }
+  .rname { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .rmeta { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 6px; align-items: center; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; letter-spacing: .3px; }
+  .b-off { background: rgba(75, 227, 166, .15); color: var(--go); }
+  .b-db { background: rgba(201, 182, 255, .15); color: var(--lilac); }
+
+  .found { border-radius: 20px; padding: 14px 16px; background: linear-gradient(135deg, rgba(75, 227, 166, .14), rgba(75, 227, 166, .04)); border: 1px solid rgba(75, 227, 166, .35); font-size: 13px; line-height: 1.5; color: #c9f7e4; }
+  .found b { color: var(--go); }
+
+  .tabbar { position: absolute; left: 16px; right: 16px; bottom: 22px; height: 70px; border-radius: 99px; background: rgba(28, 6, 25, .85); border: 1px solid var(--line);
+    display: flex; justify-content: space-around; align-items: center; box-shadow: 0 10px 40px rgba(0, 0, 0, .5); }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); font-weight: 500; }
+  .tab.on { color: #fff; }
+  .tab .ic { width: 26px; height: 26px; display: grid; place-items: center; }
+  .tab.on .pill { width: 46px; height: 30px; border-radius: 99px; background: linear-gradient(135deg, var(--pink), var(--magenta)); display: grid; place-items: center; box-shadow: 0 6px 18px rgba(255, 46, 147, .5); }
+
+  /* about you */
+  .age { display: flex; align-items: center; justify-content: space-between; }
+  .stepper { display: flex; align-items: center; gap: 18px; }
+  .stepper .s { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 22px; color: var(--bubble); }
+  .stepper .n { font-family: var(--serif); font-size: 40px; font-weight: 900; }
+  .toggle { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+  .sw { width: 50px; height: 30px; border-radius: 99px; background: rgba(255, 255, 255, .12); position: relative; }
+  .sw::after { content: ""; position: absolute; left: 4px; top: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff; }
+  .sw.on { background: linear-gradient(135deg, var(--pink), var(--magenta)); }
+  .sw.on::after { left: 24px; }
+  .consent { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 20px; font-size: 13px; line-height: 1.45; }
+  .consent.parent { background: linear-gradient(135deg, rgba(246, 195, 107, .2), rgba(246, 195, 107, .06)); border: 1px solid rgba(246, 195, 107, .45); color: var(--gold-2); }
+  .consent.plain { background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .08); color: var(--muted); }
+  .tick { width: 22px; height: 22px; border-radius: 7px; flex: none; display: grid; place-items: center; background: linear-gradient(135deg, var(--pink), var(--magenta)); color: #fff; font-size: 13px; font-weight: 800; line-height: 1; }
+  .tick.gold { background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: var(--night); }
+
+  .selfie { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .ring { width: 150px; height: 188px; border-radius: 50%; padding: 4px; background: conic-gradient(from 200deg, var(--pink), var(--gold), var(--lilac), var(--pink)); box-shadow: 0 0 50px rgba(255, 46, 147, .45); }
+  .ring .in { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(70% 60% at 50% 35%, #3d0d38, #1a0418); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  .ring .in span { font-size: 13px; font-weight: 600; color: var(--blush); }
+  .tiny { font-size: 12px; color: var(--muted); text-align: center; }
+
+  /* verdict */
+  .verdict { border-radius: 32px; padding: 20px 20px 16px; text-align: center; position: relative; overflow: hidden;
+    background: radial-gradient(90% 70% at 50% 0%, rgba(255, 61, 110, .55), rgba(255, 61, 110, .08) 70%), rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 61, 110, .55); box-shadow: 0 20px 60px rgba(255, 61, 110, .3); }
+  .stopmark { width: 60px; height: 60px; margin: 0 auto; border-radius: 24px; display: grid; place-items: center; background: linear-gradient(135deg, #ff6b8f, #e0174f); box-shadow: 0 10px 30px rgba(255, 61, 110, .6); transform: rotate(-6deg); }
+  .vt { font-family: var(--serif); font-style: italic; font-weight: 900; font-size: 44px; line-height: 1; margin-top: 12px; letter-spacing: -1px; }
+  .vq { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--bubble); font-weight: 600; margin-top: 6px; }
+  .vs { font-size: 14px; line-height: 1.45; margin-top: 10px; color: #ffe4ee; }
+  .reasons { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; text-align: left; }
+  .reason { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-radius: 16px; background: rgba(18, 3, 15, .45); font-size: 13px; }
+  .reason b { color: var(--go); font-weight: 700; }
+  .src { font-size: 11px; color: var(--muted); margin-top: 12px; }
+
+  .stats { display: flex; gap: 12px; }
+  .stat { flex: 1; border-radius: 22px; padding: 14px; background: var(--glass); border: 1px solid var(--line); display: flex; gap: 12px; align-items: center; }
+  .dial { width: 54px; height: 54px; border-radius: 50%; background: conic-gradient(var(--pink) 0 82%, rgba(255, 255, 255, .1) 82% 100%); display: grid; place-items: center; flex: none; }
+  .dial.g { background: conic-gradient(var(--gold) 0 60%, rgba(255, 255, 255, .1) 60% 100%); }
+  .dial span { width: 42px; height: 42px; border-radius: 50%; background: var(--plum); display: grid; place-items: center; font-family: var(--serif); font-weight: 900; font-size: 18px; }
+  .stat small { display: block; font-size: 11px; color: var(--muted); }
+  .stat strong { font-size: 14px; }
+
+  .bar { display: grid; grid-template-columns: 96px 1fr 30px; gap: 10px; align-items: center; font-size: 13px; }
+  .track { height: 10px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+  .fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--pink), var(--bubble)); }
+  .fill.ok { background: linear-gradient(90deg, #2bc48b, var(--go)); }
+  .fill.mid { background: linear-gradient(90deg, #ff9a3d, var(--warn)); }
+  .bar b { text-align: right; font-weight: 700; }
+  .bar .nm.focus { font-weight: 700; color: #fff; }
+
+  /* instead + routine + ask */
+  .instead { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 22px; background: linear-gradient(135deg, rgba(75, 227, 166, .16), rgba(75, 227, 166, .04)); border: 1px solid rgba(75, 227, 166, .35); }
+  .instead .drop { width: 44px; height: 44px; border-radius: 14px; flex: none; background: linear-gradient(160deg, #b6f7dc, #4be3a6); display: grid; place-items: center; }
+  .pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+  .p-gentle { background: rgba(75, 227, 166, .18); color: var(--go); }
+  .p-mid { background: rgba(255, 181, 71, .18); color: var(--warn); }
+  .p-strong { background: rgba(255, 61, 110, .2); color: #ff7c9c; }
+  .p-doc { background: rgba(124, 200, 255, .18); color: var(--doc); }
+
+  .steps { display: flex; flex-direction: column; gap: 10px; }
+  .step { display: flex; gap: 12px; align-items: center; }
+  .num { width: 34px; height: 34px; border-radius: 12px; flex: none; display: grid; place-items: center; font-family: var(--serif); font-weight: 900; font-size: 17px; background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: var(--night); }
+  .step p { font-size: 13px; line-height: 1.35; color: var(--blush); }
+  .step p b { color: #fff; display: block; font-size: 14px; }
+
+  .bubble-q { align-self: flex-end; max-width: 80%; padding: 12px 16px; border-radius: 22px 22px 6px 22px; background: linear-gradient(135deg, var(--pink), var(--magenta)); font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(255, 46, 147, .35); }
+  .bubble-a { align-self: flex-start; max-width: 92%; padding: 14px 16px; border-radius: 22px 22px 22px 6px; background: rgba(255, 255, 255, .07); border: 1px solid var(--line); font-size: 14px; line-height: 1.5; color: #ffe9f2; }
+  .cite { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: rgba(255, 46, 147, .25); color: var(--bubble); font-size: 10px; font-weight: 700; margin-left: 2px; vertical-align: 2px; }
+  .sources { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, .08); font-size: 11px; color: var(--muted); }
+  .askbar { display: flex; gap: 8px; align-items: center; height: 54px; border-radius: 99px; padding: 0 7px 0 18px; background: rgba(255, 255, 255, .08); border: 1px solid var(--line); }
+  .askbar span { flex: 1; font-size: 14px; color: var(--muted); }
+
+  /* guide */
+  .gcard { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 22px; background: var(--glass); border: 1px solid rgba(255, 255, 255, .08); }
+  .ghead { display: flex; justify-content: space-between; align-items: center; }
+  .ghead b { font-size: 15px; }
+  .gmeta { font-size: 12px; color: var(--bubble); }
+  .gnote { font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .filters { display: flex; gap: 8px; }
+  .spark { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- 1. FIND THE PRODUCT -->
+<section class="screen" data-name="01 · Find the product">
+  <div class="status"><span>9:41</span><div class="dots"><span></span><span></span></div></div>
+  <div class="content">
+    <div class="brand">
+      <div class="logo">not yet<b>.</b></div>
+      <div class="avatar">A</div>
+    </div>
+    <div>
+      <div class="tag">✦ skincare for your skin, not your feed</div>
+      <h1 style="margin-top:10px">Is it giving…<br>or is it just <i>FOMO?</i></h1>
+    </div>
+    <div class="search">
+      <span>retinol night serum</span>
+      <div class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#fff" stroke-width="2.6"/><path d="m20 20-3.5-3.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="row">
+      <div class="chip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12" stroke="#ffd1e6" stroke-width="1.8" stroke-linecap="round"/></svg>Scan barcode</div>
+      <div class="chip">Paste ingredients</div>
+    </div>
+    <div class="label" style="margin-top:2px">Tap your product</div>
+    <div class="result picked">
+      <div class="thumb"></div>
+      <div><div class="rname">Retinol 0.3% Night Face Serum</div><div class="rmeta"><span class="badge b-off">✓ OFFICIAL SITE</span> full ingredient list</div></div>
+    </div>
+    <div class="result">
+      <div class="thumb t2"></div>
+      <div><div class="rname">Retinol 24 Night Serum</div><div class="rmeta"><span class="badge b-db">DATABASE</span> ingredients listed</div></div>
+    </div>
+    <div class="result">
+      <div class="thumb t3"></div>
+      <div><div class="rname">Bakuchiol Retinol-Alt Serum</div><div class="rmeta"><span class="badge b-db">DATABASE</span> ingredients listed</div></div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab on"><div class="pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#fff" stroke-width="2.4"/><path d="M6.5 17.5 17.5 6.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></div>Check</div>
+    <div class="tab"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="#c79bb5" stroke-width="2" stroke-linejoin="round"/><path d="M9 12h6M9 16h4" stroke="#c79bb5" stroke-width="2" stroke-linecap="round"/></svg></div>Guide</div>
+    <div class="tab"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H9l-5 4z" stroke="#c79bb5" stroke-width="2" stroke-linejoin="round"/></svg></div>Ask</div>
+  </div>
+</section>
+
+<!-- 2. ABOUT YOU + SELFIE -->
+<section class="screen" data-name="02 · About you + selfie">
+  <div class="status"><span>9:41</span><div class="dots"><span></span><span></span></div></div>
+  <div class="content" style="gap:12px">
+    <div class="brand">
+      <div class="logo">not yet<b>.</b></div>
+      <div class="chip">Step 2 of 2</div>
+    </div>
+    <div class="found"><b>✓ Ingredient list from the official site.</b><br>Active ingredients: Retinol, Niacinamide, Hyaluronic acid.</div>
+    <div class="card">
+      <div class="age">
+        <div><div class="label">Your age</div><div class="sub" style="margin-top:4px">Skin needs change as you grow</div></div>
+        <div class="stepper"><div class="s">–</div><div class="n">15</div><div class="s">+</div></div>
+      </div>
+      <div class="toggle"><span>My skin gets irritated easily</span><div class="sw"></div></div>
+    </div>
+    <div class="consent parent"><div class="tick gold">✓</div><div><b>Under 18:</b> a parent or guardian is with me and agrees to this skin check.</div></div>
+    <div class="consent plain"><div class="tick">✓</div><div>My selfie goes to YouCam for a skin analysis. This app doesn't save the photo.</div></div>
+    <div class="selfie">
+      <div class="ring"><div class="in">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l2-3h6l2 3h3v11H4z" stroke="#ff8ac4" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" stroke="#ff8ac4" stroke-width="1.8"/></svg>
+        <span>Tap to take a selfie</span>
+      </div></div>
+      <div class="tiny">Face fills the oval · face a window · no makeup if you can</div>
+    </div>
+    <div class="btn">Check it <span class="spark">✦</span></div>
+  </div>
+</section>
+
+<!-- 3. VERDICT -->
+<section class="screen" data-name="03 · Verdict">
+  <div class="status"><span>9:41</span><div class="dots"><span></span><span></span></div></div>
+  <div class="content" style="gap:12px">
+    <div class="brand">
+      <div class="logo">not yet<b>.</b></div>
+      <div class="chip">Share ↗</div>
+    </div>
+    <div class="verdict">
+      <div class="stopmark"><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M7 7l10 10M17 7 7 17" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></div>
+      <div class="vt">Not yet, queen.</div>
+      <div class="vq">Retinol 0.3% Night Serum</div>
+      <p class="vs">This one's made for fine lines and dark spots. Your skin is already serving — you don't need it right now.</p>
+      <div class="reasons">
+        <div class="reason"><span>Fine lines</span><b>97 · already flawless</b></div>
+        <div class="reason"><span>Dark spots</span><b>95 · already flawless</b></div>
+        <div class="reason"><span>Retinol</span><span style="color:#ff9ab4;font-weight:600">usually 25+</span></div>
+      </div>
+      <div class="src">Based on the ingredient list on the brand's official site</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="dial"><span>15</span></div><div><small>Skin age</small><strong>Estimate</strong></div></div>
+      <div class="stat"><div class="dial g"><span>82</span></div><div><small>Overall</small><strong>Glowing</strong></div></div>
+    </div>
+    <div class="card">
+      <div class="label">What your skin actually needs</div>
+      <div class="bar"><span class="nm focus">Oily skin</span><div class="track"><div class="fill" style="width:58%"></div></div><b>58</b></div>
+      <div class="bar"><span class="nm focus">Pimples</span><div class="track"><div class="fill" style="width:66%"></div></div><b>66</b></div>
+      <div class="bar"><span class="nm">Open pores</span><div class="track"><div class="fill mid" style="width:72%"></div></div><b>72</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. INSTEAD + ROUTINE + ASK -->
+<section class="screen" data-name="04 · Instead + Ask">
+  <div class="status"><span>9:41</span><div class="dots"><span></span><span></span></div></div>
+  <div class="content">
+    <div class="brand">
+      <div class="logo">not yet<b>.</b></div>
+      <div class="chip">← Verdict</div>
+    </div>
+    <h2>Try this instead <span class="spark">✦</span></h2>
+    <div class="instead">
+      <div class="drop"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" fill="#fff"/></svg></div>
+      <div style="flex:1"><div class="ghead"><b>Niacinamide</b><span class="pill p-gentle">GENTLE</span></div><div class="gnote" style="margin-top:3px">For oily skin + pimples. Usually well tolerated at 2–5%.</div></div>
+    </div>
+    <div class="card">
+      <div class="label">Your 3-step glow routine</div>
+      <div class="steps">
+        <div class="step"><div class="num">1</div><p><b>Wash</b>Salicylic acid face wash (up to 2%)</p></div>
+        <div class="step"><div class="num">2</div><p><b>Moisturise</b>Light, oil-free gel moisturiser</p></div>
+        <div class="step"><div class="num">3</div><p><b>Protect</b>Gel sunscreen, SPF 30+ every morning</p></div>
+      </div>
+    </div>
+    <div class="label">Ask about this product</div>
+    <div class="bubble-q">Can I use it with my salicylic face wash?</div>
+    <div class="bubble-a">Using retinol and acids on the same night often causes dryness and irritation<span class="cite">7</span>. Young skin usually needs neither<span class="cite">7</span> — your niacinamide pick is the move<span class="cite">4</span>.
+      <div class="sources"><span><span class="cite">4</span> Ingredient guide: Niacinamide</span><span><span class="cite">7</span> Retinol with acids</span></div>
+    </div>
+    <div class="askbar"><span>Ask anything about it…</span><div class="search" style="height:40px;width:40px;padding:0;border:0;background:none"><div class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></div>
+  </div>
+</section>
+
+<!-- 5. INGREDIENT GUIDE -->
+<section class="screen" data-name="05 · Ingredient guide">
+  <div class="status"><span>9:41</span><div class="dots"><span></span><span></span></div></div>
+  <div class="content">
+    <div class="brand">
+      <div class="logo">not yet<b>.</b></div>
+      <div class="avatar">A</div>
+    </div>
+    <div>
+      <div class="tag">✦ the ingredient tea</div>
+      <h1 style="margin-top:8px;font-size:34px">What's in the hype,<br>and who it's <i>for.</i></h1>
+    </div>
+    <div class="filters"><div class="chip on">All</div><div class="chip">Gentle</div><div class="chip">Strong</div><div class="chip">Doctor only</div></div>
+    <div class="gcard"><div class="ghead"><b>Retinol / retinal</b><span class="pill p-strong">STRONG</span></div><div class="gmeta">For fine lines, texture, dark spots · usually 25+</div><div class="gnote">An anti-ageing ingredient. It can cause dryness, peeling and sun sensitivity.</div></div>
+    <div class="gcard"><div class="ghead"><b>Niacinamide</b><span class="pill p-gentle">GENTLE</span></div><div class="gmeta">For oil, pores, redness, pimples · 12+</div><div class="gnote">Usually well tolerated at 2–5%.</div></div>
+    <div class="gcard"><div class="ghead"><b>Salicylic acid (BHA)</b><span class="pill p-mid">MEDIUM</span></div><div class="gmeta">For pimples, oil, pores · 12+</div><div class="gnote">A low-strength face wash (up to 2%) is a common first step.</div></div>
+  </div>
+  <div class="tabbar">
+    <div class="tab"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#c79bb5" stroke-width="2"/><path d="M6.5 17.5 17.5 6.5" stroke="#c79bb5" stroke-width="2" stroke-linecap="round"/></svg></div>Check</div>
+    <div class="tab on"><div class="pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 12h6M9 16h4" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div>Guide</div>
+    <div class="tab"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H9l-5 4z" stroke="#c79bb5" stroke-width="2" stroke-linejoin="round"/></svg></div>Ask</div>
+  </div>
+</section>
+
+</body>
+</html>

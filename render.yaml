@@ -1,0 +1,24 @@
+# One-click deploy on Render (Blueprint). The API keys are NOT stored here:
+# Render asks for them when you create the service (sync: false).
+services:
+  - type: web
+    name: not-yet
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: "echo no build step"
+    startCommand: npm start
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: YOUCAM_BASE
+        value: https://yce-api-01.makeupar.com
+      - key: MAX_SCANS_PER_DAY
+        value: "30"
+      - key: MAX_ASKS_PER_DAY
+        value: "200"
+      - key: YOUCAM_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

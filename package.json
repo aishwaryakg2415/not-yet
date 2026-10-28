@@ -1,0 +1,14 @@
+{
+  "name": "not-yet",
+  "version": "0.1.0",
+  "description": "Does this skincare product match what your skin needs right now? A skin check for teens and their parents, built on the YouCam Skin Analysis API.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --env-file-if-exists=.env server.js",
+    "demo": "node --env-file-if-exists=.env server.js --demo",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=22" },
+  "license": "MIT"
+}

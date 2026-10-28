@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Not Yet</title>
+  <meta name="description" content="Does this skincare product match what your skin needs right now? Built on the YouCam Skin Analysis API.">
+  <meta name="theme-color" content="#f2f6ef">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Not Yet">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="brandbar">
+    <div class="logo">Not Yet<b>skin, honestly</b></div>
+    <span class="chip" id="modeBadge" hidden>Example data</span>
+    <button class="chip" id="backBtn" type="button" hidden>← Back</button>
+  </header>
+
+  <main>
+    <!-- CHECK -->
+    <section id="check" class="view">
+      <div id="form">
+        <!-- Step 1: the product -->
+        <div id="stepProduct" class="stack">
+          <div class="hero">
+            <div class="tag">Skincare for your skin, not your feed</div>
+            <h1>Does your skin<br>really <i>need</i> it?</h1>
+          </div>
+
+          <div class="search">
+            <input id="product" placeholder="e.g. retinol night serum" enterkeyhint="search" autocomplete="off" aria-label="Product name">
+            <button class="go" id="findBtn" type="button" aria-label="Find its ingredients">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#fff" stroke-width="2.6"/><path d="m20 20-3.5-3.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+
+          <div class="chips">
+            <label class="chip" id="barcodeBtn" hidden>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Scan barcode<input type="file" id="barcodePhoto" accept="image/*" capture="environment">
+            </label>
+            <button class="chip" type="button" id="pasteChip">Paste ingredients</button>
+          </div>
+
+          <div class="codebar">
+            <input id="barcode" inputmode="numeric" placeholder="Or type a barcode number" aria-label="Barcode number">
+            <button class="chip" type="button" id="codeBtn">Look up</button>
+          </div>
+
+          <p class="status" id="findStatus" role="status"></p>
+          <ul class="results" id="results"></ul>
+          <div class="found" id="pickedBox" hidden></div>
+
+          <details class="card" id="manual">
+            <summary class="label">Paste the ingredient list yourself</summary>
+            <textarea id="inci" rows="3" placeholder="Aqua, Glycerin, Retinol, …"></textarea>
+          </details>
+
+          <details class="card" id="chipBox">
+            <summary class="label" id="detected">Ingredients we look for</summary>
+            <div class="chips" id="ingChips"></div>
+          </details>
+
+          <button class="btn" id="nextBtn" type="button" disabled>Next: about you <span class="spark">→</span></button>
+        </div>
+
+        <!-- Step 2: about you + selfie -->
+        <div id="stepYou" class="stack" hidden>
+          <div class="card">
+            <div class="age">
+              <div><div class="label">Your age</div><div class="sub">Skin needs change as you grow</div></div>
+              <div class="stepper">
+                <button class="s" type="button" id="ageMinus" aria-label="Younger">–</button>
+                <input id="age" type="number" inputmode="numeric" min="8" max="99" placeholder="15" aria-label="Age">
+                <button class="s" type="button" id="agePlus" aria-label="Older">+</button>
+              </div>
+            </div>
+            <label class="toggle">My skin gets irritated easily <input type="checkbox" id="sensitive" class="switch"></label>
+          </div>
+
+          <label class="consent parent" id="parentBox" hidden><input type="checkbox" id="parent" class="tick gold"> <span><b>Under 18:</b> a parent or guardian is with me and agrees to this skin check.</span></label>
+          <label class="consent plain"><input type="checkbox" id="consent" class="tick"> <span>My selfie goes to YouCam for a skin analysis. This app doesn't save the photo.</span></label>
+
+          <label class="selfie off" id="photoLabel">
+            <input type="file" id="photo" accept="image/*" capture="user" disabled>
+            <span class="ring"><span class="in" id="preview">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l2-3h6l2 3h3v11H4z" stroke="#ff8ac4" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" stroke="#ff8ac4" stroke-width="1.8"/></svg>
+              <span id="ovalText">Fill in your age first</span>
+            </span></span>
+            <span class="tiny">Face fills the oval · face a window · no makeup if you can</span>
+          </label>
+
+          <button class="btn" id="checkBtn" disabled>Check it <span class="spark">→</span></button>
+          <p class="status" id="status" role="status"></p>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div id="result" class="stack" hidden>
+        <div class="verdict" id="verdictCard">
+          <div class="vmark" id="vIcon"></div>
+          <div class="vt" id="vTitle"></div>
+          <div class="vq" id="vName"></div>
+          <p class="vs" id="vSub"></p>
+          <div class="reasons" id="vReasons"></div>
+          <p class="src" id="vSrc"></p>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><div class="dial" id="dialAge"><span id="skinAge">–</span></div><div><small>Skin age</small><strong>Estimate</strong></div></div>
+          <div class="stat"><div class="dial gold" id="dialOverall"><span id="overall">–</span></div><div><small>Overall</small><strong id="overallWord">Score</strong></div></div>
+        </div>
+
+        <div class="card">
+          <div class="label">What your skin actually needs</div>
+          <div id="bars"></div>
+          <p class="tiny left">Higher is healthier · bold = your top needs · ◂ = what this product targets</p>
+        </div>
+
+        <div id="insteadCard" class="stack tight">
+          <h2>Try this instead</h2>
+          <div id="instead" class="stack tight"></div>
+        </div>
+
+        <div class="card">
+          <div class="label">A simple three-step routine</div>
+          <ol class="steps" id="routine"></ol>
+        </div>
+
+        <div class="stack tight" id="askCard" hidden>
+          <div class="label">Ask about this product</div>
+          <div class="chips" id="askChips"></div>
+          <div id="answers" class="chat"></div>
+          <form class="askbar" id="askForm">
+            <input id="askInput" maxlength="300" placeholder="Ask anything about it…" autocomplete="off" aria-label="Your question">
+            <button class="go" id="askBtn" aria-label="Ask">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </form>
+          <p class="tiny left">Answers use only this product's ingredient list, your scan and the app's ingredient guide, and show their sources. AI can still make mistakes.</p>
+        </div>
+
+        <div class="card">
+          <div class="label" id="shareTitle">Send to your parent</div>
+          <label class="toggle">Language <select id="lang"></select></label>
+          <pre class="summary" id="summary"></pre>
+          <div class="row2">
+            <button class="btn small" id="waBtn">Send on WhatsApp</button>
+            <button class="btn ghost small" id="copyBtn">Copy</button>
+          </div>
+        </div>
+
+        <button class="btn" id="againBtn">Check another product <span class="spark">→</span></button>
+        <button class="btn ghost" id="newBtn">New person</button>
+        <p class="tiny">Checking another product reuses this skin scan: no new selfie needed.</p>
+      </div>
+    </section>
+
+    <!-- GUIDE -->
+    <section id="guide" class="view stack" hidden>
+      <div class="hero">
+        <div class="tag">The ingredient guide</div>
+        <h1 class="h1s">What's inside,<br>and who it's <i>for.</i></h1>
+      </div>
+      <div class="chips" id="guideFilters">
+        <button class="chip on" type="button" data-f="all">All</button>
+        <button class="chip" type="button" data-f="gentle">Gentle</button>
+        <button class="chip" type="button" data-f="moderate">Medium</button>
+        <button class="chip" type="button" data-f="strong">Strong</button>
+        <button class="chip" type="button" data-f="doctor">Doctor only</button>
+      </div>
+      <div id="guideList" class="stack tight"></div>
+      <p class="tiny left">General guidance, not medical advice. Ages are a rough guide to when an ingredient is usually needed, not a rule.</p>
+    </section>
+
+    <footer class="foot">Cosmetic guidance only, not medical advice. Skin analysis by the YouCam API.<br>
+      Ingredient lists from <a href="https://world.openbeautyfacts.org" target="_blank" rel="noopener">Open Beauty Facts</a> (ODbL) and brands' official sites. Lists can be incomplete: check the box.</footer>
+  </main>
+
+  <nav class="tabbar" role="tablist">
+    <button class="tab on" role="tab" data-view="check" aria-selected="true">
+      <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2.2"/><path d="M6.5 17.5 17.5 6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Check
+    </button>
+    <button class="tab" role="tab" data-view="guide" aria-selected="false">
+      <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>Guide
+    </button>
+    <button class="tab" role="tab" data-view="ask" aria-selected="false">
+      <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H9l-5 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>Ask
+    </button>
+  </nav>
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>

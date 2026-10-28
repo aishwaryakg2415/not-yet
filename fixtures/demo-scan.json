@@ -1,0 +1,21 @@
+{
+  "task_status": "success",
+  "error": null,
+  "results": {
+    "output": [
+      { "type": "acne", "raw_score": 66.4, "ui_score": 76 },
+      { "type": "oiliness", "raw_score": 58.1, "ui_score": 71 },
+      { "type": "redness", "raw_score": 88.2, "ui_score": 89 },
+      { "type": "pore", "raw_score": 72.3, "ui_score": 79 },
+      { "type": "moisture", "raw_score": 86.0, "ui_score": 87 },
+      { "type": "texture", "raw_score": 87.4, "ui_score": 88 },
+      { "type": "radiance", "raw_score": 84.1, "ui_score": 85 },
+      { "type": "dark_circle_v2", "raw_score": 82.0, "ui_score": 84 },
+      { "type": "wrinkle", "raw_score": 97.3, "ui_score": 96 },
+      { "type": "age_spot", "raw_score": 95.1, "ui_score": 95 },
+      { "type": "all", "score": 81.7 },
+      { "type": "skin_age", "score": 15 }
+    ]
+  },
+  "_note": "Example data in the YouCam result format (a typical teen: some oil and pimples, no wrinkles). Not a real person's scan."
+}
