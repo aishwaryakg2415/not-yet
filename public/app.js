@@ -26,7 +26,8 @@ function showStep(step) {
   window.scrollTo(0, 0);
 }
 $("backBtn").onclick = () => showStep("product");
-$("nextBtn").onclick = () => { showStep("you"); updateForm(); };
+// With a scan already done (same person, another product), skip straight to the new verdict.
+$("nextBtn").onclick = () => { if (state.scan) return showResult(); showStep("you"); updateForm(); };
 
 // ---- bottom tab bar ----
 function showView(view) {
@@ -97,7 +98,7 @@ async function pick(i) {
   const p = state.found[i];
   $("results").innerHTML = ""; findStatus("");
   $("product").value = p.brand && !p.name.toLowerCase().startsWith(p.brand.toLowerCase()) ? `${p.brand} ${p.name}` : p.name;
-  state.url = null; state.kind = null;
+  state.url = null; state.kind = null; state.price = p.price ?? null;
   let ingredients = p.ingredients;
   if (p.source === "shop") {
     // Retrieve the official product page and extract its ingredient list (server-side).
@@ -166,6 +167,7 @@ const age = () => Number($("age").value) || 0;
 const hasProduct = () => !!(state.picked.size || $("product").value.trim() || $("inci").value.trim());
 function updateForm() {
   $("nextBtn").disabled = !hasProduct();
+  $("nextBtn").innerHTML = state.scan ? `Check it with the same scan <span class="spark">→</span>` : `Next: about you <span class="spark">→</span>`;
   const a = age();
   $("parentBox").hidden = !(a > 0 && a < 18);
   const consentOk = $("consent").checked && (a >= 18 || $("parent").checked);
@@ -230,6 +232,21 @@ $("checkBtn").onclick = async () => {
   updateForm();
 };
 
+// No selfie? A sample teen's scan (bundled with the server), so anyone can try the whole flow. Costs no units.
+$("exampleBtn").onclick = async () => {
+  if (!hasProduct()) { showStep("product"); return toast("Pick or paste a product first."); }
+  if (!age()) $("age").value = 15;
+  setStatus("Loading the example scan…");
+  try {
+    const p = await (await fetch("/api/scan/demo")).json();
+    if (p.state !== "success") throw new Error();
+    state.scan = { ...p, example: true }; state.photo = null;
+    $("photo").value = ""; $("preview").style.backgroundImage = ""; $("preview").classList.remove("has-photo");
+    setStatus(""); showResult();
+  } catch { setStatus("Couldn't load the example scan. Please try again.", true); }
+  updateForm();
+};
+
 // ---- result ----
 const ICON = {
   x: `<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M7 7l10 10M17 7 7 17" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`,
@@ -279,6 +296,12 @@ function showResult() {
     + notes.map(n => `<div class="reason note">${esc(n)}</div>`).join("");
   $("vSrc").textContent = { list: "Based on the product's ingredient list (Open Beauty Facts).", web: `Based on the ingredient list on the brand's official site${state.url ? ` (${new URL(state.url).hostname})` : ""}.`, name: "Based on the product name only: no ingredient list was found.", manual: "Based on the ingredients you entered." }[state.source] ?? "";
 
+  $("exampleNote").hidden = !state.scan.example;
+  renderSaved(r.verdict);
+  remember(r.verdict);
+  renderMasks(r);
+  loadRealProducts(r);
+
   $("skinAge").textContent = skinAge ?? "–";
   $("dialAge").style.setProperty("--p", Math.min(100, skinAge ?? 0));
   $("overall").textContent = overall != null ? Math.round(overall) : "–";
@@ -306,6 +329,75 @@ function showResult() {
   $("lang").value = pref.get();
   renderSummary();
   $("answers").innerHTML = ""; $("askInput").value = "";
+}
+
+// ---- money saved: skipping a product your skin doesn't need ----
+const saved = {
+  get() { try { return JSON.parse(localStorage.getItem("ny.saved") || "{}"); } catch { return {}; } },
+  set(v) { try { localStorage.setItem("ny.saved", JSON.stringify(v)); } catch {} },
+};
+const rupees = n => "₹" + Math.round(n).toLocaleString("en-IN");
+function renderSaved(verdict) {
+  const skip = verdict === "not-yet" || verdict === "too-strong";
+  $("vSaved").hidden = !(skip && state.price);
+  if ($("vSaved").hidden) return;
+  let text = `Skipping it saves you ${rupees(state.price)}.`;
+  if (!state.scan.example) { // only real checks count towards the running total
+    const all = saved.get(); all[state.url ?? $("product").value.trim()] = state.price; saved.set(all);
+    const total = Object.values(all).reduce((a, b) => a + b, 0);
+    if (total > state.price) text += ` Total saved with Not Yet: ${rupees(total)}.`;
+  }
+  $("vSaved").textContent = text;
+}
+
+// ---- compare: every product checked against the same scan, best fit first ----
+const RANK = { "good-fit": 0, "too-strong": 1, "not-yet": 2, "doctor-only": 3, unknown: 4 };
+function remember(verdict) {
+  const name = $("product").value.trim() || "Product";
+  state.history = (state.history ?? []).filter(h => h.name !== name).concat({ name, verdict, price: state.price });
+  const list = [...state.history].sort((a, b) => RANK[a.verdict] - RANK[b.verdict]);
+  $("compareCard").hidden = list.length < 2;
+  $("compare").innerHTML = list.map(h => `<li class="c-${h.verdict}"><span>${esc(h.name)}</span><b>${esc(VERDICT_UI[h.verdict].title.replace(/\.$/, ""))}</b></li>`).join("");
+}
+
+// ---- see it on your skin: YouCam's per-concern masks over the analysed photo ----
+function renderMasks(r) {
+  const { masks = {}, photo } = state.scan;
+  const show = [...new Set([...r.top, ...r.targets])].filter(c => masks[c]);
+  $("maskCard").hidden = !show.length || !photo;
+  if ($("maskCard").hidden) return;
+  $("maskBase").src = photo;
+  const pickMask = c => {
+    $("maskLayer").src = masks[c];
+    for (const b of $("maskChips").children) b.classList.toggle("on", b.dataset.c === c);
+  };
+  $("maskChips").innerHTML = show.map(c => `<button type="button" class="chip" data-c="${c}">${EN.concern[c]} · ${Math.round(state.scan.scores[c])}</button>`).join("");
+  $("maskChips").onclick = e => { const b = e.target.closest("button[data-c]"); if (b) pickMask(b.dataset.c); };
+  pickMask(show[0]);
+}
+
+// ---- real products that fit: searched in brand stores, checked against their official ingredient lists ----
+let realReq = 0;
+async function loadRealProducts(r) {
+  const req = ++realReq;
+  const ids = r.alternatives.map(i => i.id);
+  $("realBox").hidden = !ids.length || r.verdict === "good-fit";
+  if ($("realBox").hidden) return;
+  $("real").innerHTML = `<li class="loading">Finding real products that fit your skin…</li>`;
+  try {
+    const res = await fetch("/api/alternatives", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ingredients: ids, scores: state.scan.scores, age: age(), sensitive: $("sensitive").checked }) });
+    const j = await res.json();
+    if (req !== realReq) return; // a newer check started
+    if (!j.products?.length) { $("realBox").hidden = true; return; }
+    $("real").innerHTML = j.products.map(p => `
+      <li><a href="${esc(p.url)}" target="_blank" rel="noopener">
+        ${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : `<span class="noimg"></span>`}
+        <span class="rb"><b>${esc(p.name)}</b><span class="muted">${esc(p.brand)}${p.price ? ` · ${rupees(p.price)}` : ""}</span>
+          <span class="fit">A good fit · for ${list(p.helps)}</span></span>
+        <span class="arrow" aria-hidden="true">↗</span>
+      </a></li>`).join("");
+  } catch { if (req === realReq) $("realBox").hidden = true; }
 }
 
 // ---- ask about this product (RAG on the server: retrieve sources, Gemini answers from them only) ----
@@ -363,13 +455,13 @@ $("copyBtn").onclick = async () => {
 
 // Another product, same face: no new scan, no new units.
 function clearProduct() {
-  state.picked.clear(); state.source = null; state.found = []; state.url = null; state.kind = null; state.result = null;
+  state.picked.clear(); state.source = null; state.found = []; state.url = null; state.kind = null; state.result = null; state.price = null;
   for (const id of ["product", "inci", "barcode"]) $(id).value = "";
   $("results").innerHTML = ""; $("pickedBox").hidden = true; $("manual").open = false; findStatus("");
 }
 $("againBtn").onclick = () => { clearProduct(); renderChips(); showStep("product"); updateForm(); };
 $("newBtn").onclick = () => {
-  clearProduct(); state.photo = null; state.scan = null;
+  clearProduct(); state.photo = null; state.scan = null; state.history = [];
   $("age").value = "";
   for (const id of ["consent", "parent", "sensitive"]) $(id).checked = false;
   $("photo").value = ""; $("preview").style.backgroundImage = ""; $("preview").classList.remove("has-photo");
