@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { CONCERNS } from "./public/engine.js";
 import { searchProducts, productByCode, correctQuery, tokens } from "./products.js";
 import { retrieve, buildPrompt, askGemini, citedIds, cleanCitations } from "./rag.js";
-import { shopIngredients } from "./web.js";
+import { shopIngredients, findAlternatives } from "./web.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC = join(ROOT, "public");
@@ -88,14 +88,16 @@ export function normalize_(data) {
     const code = data.error ?? "unknown_error";
     return { state: "error", code, message: RETAKE[code] ?? `The scan failed (${code}). Please try again.` };
   }
-  const scores = {}, ui = {};
-  let overall = null, skinAge = null;
+  const scores = {}, ui = {}, masks = {};
+  let overall = null, skinAge = null, photo = null;
   for (const o of data.results?.output ?? []) {
     if (typeof o.raw_score === "number") { scores[o.type] = Math.round(o.raw_score * 10) / 10; ui[o.type] = o.ui_score; }
     if (o.type === "all") overall = o.score;
     if (o.type === "skin_age") skinAge = o.score;
+    // Per-concern transparent PNG masks, aligned to "resize_image" (the photo as YouCam analysed it).
+    if (o.mask_urls?.[0]) { if (o.type === "resize_image") photo = o.mask_urls[0]; else masks[o.type] = o.mask_urls[0]; }
   }
-  return { state: "success", scores, ui, overall, skinAge };
+  return { state: "success", scores, ui, overall, skinAge, photo, masks };
 }
 
 async function pollScan(taskId) {
@@ -163,6 +165,13 @@ async function api(req, res, url) {
     if (fixed === tokens(q).join(" ")) return send(res, 200, first);
     const second = await searchProducts(fixed);
     return send(res, 200, second.exact || second.products.length > first.products.length ? { ...second, corrected: fixed } : first);
+  }
+
+  // Real products (from brand stores) that are a good fit for this person, for the suggested gentler ingredients.
+  if (url.pathname === "/api/alternatives" && req.method === "POST") {
+    let body;
+    try { body = JSON.parse((await readBody(req)).toString("utf8") || "{}"); } catch { throw new ApiError(400, "bad_json"); }
+    return send(res, 200, { products: await findAlternatives({ ingredients: body.ingredients, scores: body.scores, age: Number(body.age) || 0, sensitive: !!body.sensitive }, GEMINI_KEY) });
   }
 
   // Ingredients for a product found on a brand's own store, extracted from its official page.

@@ -3,6 +3,7 @@
 // first with a pattern, then with Gemini reading ONLY the page text. Every extracted ingredient must appear
 // in the page, so nothing invented gets through.
 import { askGemini } from "./rag.js";
+import { byId, detectIngredients, judge } from "./public/engine.js";
 
 export const SHOPS = [
   { brand: "Minimalist", domain: "beminimalist.co", aliases: ["minimalist", "be minimalist", "beminimalist"] },
@@ -38,9 +39,11 @@ async function suggest(shop, q) {
       { headers: UA, signal: AbortSignal.timeout(8000) });
     if (!r.ok) return [];
     const j = await r.json().catch(() => ({}));
+    const money = v => { const n = parseFloat(v); return Number.isFinite(n) && n > 0 ? Math.round(n) : null; };
     return (j.resources?.results?.products ?? []).map(p => ({
       source: "shop", domain: shop.domain, brand: shop.brand, name: p.title,
       path: String(p.url ?? "").split("?")[0], image: thumb(p.featured_image?.url ?? p.image), ingredients: "",
+      price: money(p.price_min ?? p.price), available: p.available !== false,
     })).filter(p => /^\/products\/[a-z0-9-]+$/i.test(p.path));
   });
 }
@@ -105,4 +108,38 @@ export async function shopIngredients(domain, path, geminiKey) {
       return { kind: "none", ingredients: "", url };
     }
   });
+}
+
+// ---- Real products to try instead ----
+// For each gentler ingredient the verdict suggests, search every brand store, read each candidate's official
+// ingredient list, and keep only products the same verdict engine rates "good-fit" for this person.
+const NOT_SINGLE_FACE_PRODUCT = /\b(kit|combo|set|bundle|regime|routine|duo|trio|pack of|gift|body|hair|scalp|lip|shampoo|deo)\b/i;
+
+export async function findAlternatives({ ingredients, scores, age, sensitive }, geminiKey) {
+  const ids = (ingredients ?? []).filter(id => byId[id]).slice(0, 2);
+  if (!ids.length || !scores) return [];
+  const seen = new Map();
+  for (const id of ids) {
+    const term = byId[id].match[0]; // e.g. "niacinamide", "salicylic"
+    const pages = await Promise.allSettled(SHOPS.map(s => suggest(s, term)));
+    for (const p of pages.flatMap(x => x.status === "fulfilled" ? x.value : [])) {
+      if (!p.available || NOT_SINGLE_FACE_PRODUCT.test(p.name)) continue;
+      if (!p.name.toLowerCase().includes(term.split(" ")[0])) continue; // the product is about this ingredient
+      seen.set(`${p.domain}${p.path}`, { ...p, for: id });
+    }
+  }
+  // Read official ingredient lists for a handful of candidates, cheapest first.
+  const candidates = [...seen.values()].sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9)).slice(0, 8);
+  const read = await Promise.allSettled(candidates.map(p => shopIngredients(p.domain, p.path, geminiKey)));
+  const picks = [];
+  candidates.forEach((p, i) => {
+    const info = read[i].status === "fulfilled" ? read[i].value : null;
+    if (!info?.ingredients) return; // no verified list: don't recommend it
+    const found = detectIngredients(`${p.name} ${info.ingredients}`);
+    const v = judge({ scores, age, ingredients: found, sensitive });
+    if (v.verdict === "good-fit" && found.includes(p.for)) {
+      picks.push({ name: p.name, brand: p.brand, url: info.url, image: p.image, price: p.price, for: p.for, helps: v.helps, listKind: info.kind });
+    }
+  });
+  return picks.slice(0, 4);
 }

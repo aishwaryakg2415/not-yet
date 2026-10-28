@@ -1,6 +1,6 @@
 // Service worker: keeps the app shell available offline and makes the app installable.
 // API calls (/api/...) always go to the network: scans and answers must be fresh.
-const CACHE = "not-yet-v1";
+const CACHE = "not-yet-v2";
 const SHELL = ["/", "/index.html", "/style.css", "/app.js", "/engine.js", "/i18n.js", "/icon.svg", "/icon-192.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", e => {

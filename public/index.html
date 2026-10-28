@@ -34,7 +34,17 @@
           <div class="hero">
             <div class="tag">Skincare for your skin, not your feed</div>
             <h1>Does your skin<br>really <i>need</i> it?</h1>
+            <svg class="art" viewBox="0 0 120 120" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="47" y="40" width="26" height="62" rx="5"/><path d="M53 40v-9h14v9M55 31v-6h10v6"/><path d="M53 58h14M53 64h10"/>
+              <path d="M78 100c10-6 16-17 14-31-9 4-15 13-14 31z"/><path d="M78 100c3-10 7-19 14-31"/>
+              <path d="M42 100c-10-4-17-13-17-25 9 2 16 10 17 25z"/><path d="M42 100c-4-8-9-16-17-25"/>
+              <circle cx="88" cy="34" r="2"/><circle cx="30" cy="48" r="1.5"/></g></svg>
           </div>
+          <ol class="how">
+            <li><b>Find it</b><span>name, barcode or ingredients</span></li>
+            <li><b>Selfie</b><span>YouCam reads your skin</span></li>
+            <li><b>Verdict</b><span>with the evidence</span></li>
+          </ol>
 
           <div class="search">
             <input id="product" placeholder="e.g. retinol night serum" enterkeyhint="search" autocomplete="off" aria-label="Product name">
@@ -101,23 +111,40 @@
 
           <button class="btn" id="checkBtn" disabled>Check it <span class="spark">→</span></button>
           <p class="status" id="status" role="status"></p>
+          <button class="btn ghost" id="exampleBtn" type="button">No selfie? Try with an example scan</button>
+          <p class="tiny">Uses a sample teen's scan, so you can see how Not Yet works without a photo.</p>
         </div>
       </div>
 
       <!-- RESULT -->
       <div id="result" class="stack" hidden>
+        <p class="found guess" id="exampleNote" hidden><b>Example scan.</b> These scores are a sample teen's, not yours. Take a selfie for your own verdict.</p>
         <div class="verdict" id="verdictCard">
           <div class="vmark" id="vIcon"></div>
           <div class="vt" id="vTitle"></div>
           <div class="vq" id="vName"></div>
           <p class="vs" id="vSub"></p>
           <div class="reasons" id="vReasons"></div>
+          <p class="saved" id="vSaved" hidden></p>
           <p class="src" id="vSrc"></p>
+        </div>
+
+        <div class="card" id="compareCard" hidden>
+          <div class="label">Products you checked</div>
+          <ol class="compare" id="compare"></ol>
+          <p class="tiny left">Best fit first. All from the same skin scan.</p>
         </div>
 
         <div class="stats">
           <div class="stat"><div class="dial" id="dialAge"><span id="skinAge">–</span></div><div><small>Skin age</small><strong>Estimate</strong></div></div>
           <div class="stat"><div class="dial gold" id="dialOverall"><span id="overall">–</span></div><div><small>Overall</small><strong id="overallWord">Score</strong></div></div>
+        </div>
+
+        <div class="card" id="maskCard" hidden>
+          <div class="label">See it on your skin</div>
+          <div class="maskview"><img id="maskBase" alt="Your photo as YouCam analysed it"><img id="maskLayer" alt=""></div>
+          <div class="chips" id="maskChips"></div>
+          <p class="tiny left">Highlighted by YouCam AI Skin Analysis. Shown only to you, not saved.</p>
         </div>
 
         <div class="card">
@@ -129,6 +156,11 @@
         <div id="insteadCard" class="stack tight">
           <h2>Try this instead</h2>
           <div id="instead" class="stack tight"></div>
+          <div id="realBox" class="stack tight" hidden>
+            <div class="label small-label">Real products that fit your skin</div>
+            <ul class="real" id="real"></ul>
+            <p class="tiny left" id="realNote">Checked against each product's ingredient list on the brand's official site.</p>
+          </div>
         </div>
 
         <div class="card">
